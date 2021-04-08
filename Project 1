@@ -1,0 +1,438 @@
+// stiva memorata cu lista alocata dinamic
+// concepte de poo
+// meniu interactiv
+#include <iostream>
+#include <cstring>
+
+using namespace std;
+
+class Nod{
+    char info;
+    Nod *next;
+public:
+    Nod(){ //constructorul fara parametri
+        this->info = '\0';
+        this->next = NULL;
+    }
+    Nod(char newInfo){ //constructorul cu parametri
+        this->info = newInfo;
+        this->next = NULL;
+    }
+
+    Nod(const Nod& copyNod){ //copy constructorul
+        this->info = copyNod.info;
+        this->next = copyNod.next;
+    }
+
+    Nod& operator=(const Nod& copyNod){ //=
+        if(this!=&copyNod){
+            if(info)
+                info = '\0';
+            this->info = copyNod.info;
+            this->next = copyNod.next;
+        }
+    }
+    char getInfo(){
+        return this->info;
+    }
+    void setInfo(char newInfo){
+        this->info = newInfo;
+    }
+    Nod* getLegatura(){
+        return next;
+    }
+    void setLegatura(Nod *p){
+        this->next = p;
+    }
+    ~Nod(){ //destructor
+        if(info)
+            info = '\0';
+        //cout<<"s-a apelat destructorul pentru nod";
+    }
+};
+
+class Stiva_de_caractere{
+    Nod *varf;
+public:
+    Stiva_de_caractere();
+    Stiva_de_caractere(const Stiva_de_caractere& s2);
+    Stiva_de_caractere& operator=(const Stiva_de_caractere& s2);
+    friend ostream& operator<<(ostream& out,Stiva_de_caractere& s);
+    friend istream& operator>>(istream&,Stiva_de_caractere&);
+    Nod* getVarf();
+    void setVarf(char newInfo);
+    void push(char newInfo);
+    void pop();
+    void top();
+    int isempty();
+    char inversare(char s[]);
+    void citire_memorare_afisare();
+    Stiva_de_caractere operator-(Stiva_de_caractere& s2);
+    ~Stiva_de_caractere();
+};
+Stiva_de_caractere::Stiva_de_caractere(){ //constructorul
+    varf = NULL;
+}
+
+Stiva_de_caractere::Stiva_de_caractere(const Stiva_de_caractere& s2){ //copy constructorul
+    Stiva_de_caractere aux; //ne folosim de o stiva auxiliara pentru a pastra ordinea la copiere
+    Nod *auxNod;
+    auxNod = s2.varf;
+    while(auxNod!=NULL){ //copiem din stiva initiala valorile si le punem in aux
+        aux.push(auxNod->getInfo());
+        auxNod = auxNod->getLegatura();
+    }
+    while(aux.varf!=NULL){ //copiem din aux si punem in stiva noastra
+        push(aux.varf->getInfo());
+        aux.pop();
+    }
+}
+
+Stiva_de_caractere& Stiva_de_caractere::operator=(const Stiva_de_caractere& s2){ // = (destructor + copy constructor)
+    if(this!=&s2){
+        if(varf!=NULL)   // verificam daca nu e vida
+            while(varf!=NULL){
+                Nod *aux;
+                aux = varf;
+                varf = varf->getLegatura();
+                delete aux;
+            }
+        Stiva_de_caractere aux;
+        Nod *auxNod;
+        auxNod = s2.varf;
+        while(auxNod!=NULL){
+            aux.push(auxNod->getInfo());
+            auxNod = auxNod->getLegatura();
+        }
+        while(aux.varf!=NULL){
+            push(aux.varf->getInfo());
+            aux.pop();
+        }
+
+    }
+
+}
+ostream& operator<<(ostream& out,Stiva_de_caractere& s){
+    out<<"Elementele stivei sunt: \n";
+    while(s.varf!=NULL){
+        out<<s.varf->getInfo()<<" ";
+        s.pop(); //elementele sunt eliminate simultan cu afisarea stivei
+    }
+    return out;
+}
+
+istream& operator>>(istream& in,Stiva_de_caractere& s){
+    cout<<"Dati numarul de elemente pe care-l introduceti: ";
+    int n;
+    in>>n;
+    char c;
+    cout<<"\nScrieti elementele cu spatiu sau enter intre ele\n";
+    for(int i=1;i<=n;i++){
+        in>>c;
+        s.push(c); //elementele sunt introduse in stiva simultan cu citirea
+    }
+    return in;
+}
+Nod* Stiva_de_caractere::getVarf(){
+    return varf;
+}
+void Stiva_de_caractere::setVarf(char newInfo){
+    varf->setInfo(newInfo);
+}
+void Stiva_de_caractere::push(char newInfo){
+    Nod* element;
+    element = new Nod;
+    element->setInfo(newInfo);
+    if(isempty()==0){ // daca nu este goala, legam elementul introdus de varf, apoi el va deveni varf
+        element->setLegatura(varf);
+        varf = element;
+    }
+    else // daca este goala, elementul va fi primul din stiva, adica varful
+        varf = element;
+
+}
+
+void Stiva_de_caractere::pop(){
+    if(isempty()==0){
+        Nod *aux;
+        aux = varf;
+        varf = varf->getLegatura();
+        delete aux;
+    }
+
+}
+void Stiva_de_caractere::top(){
+    cout<<"Varful stivei este "<<varf->getInfo()<<'\n';
+}
+int Stiva_de_caractere::isempty(){
+    if(varf==NULL)
+        return 1; // returnam 1 daca e vida
+    else
+        return 0; // returnam 0 daca NU e vida
+}
+char Stiva_de_caractere::inversare(char s[]){
+    for(int i=0;i<strlen(s);i++)
+        push(s[i]); //introducem caracterele in stiva de la inceput pana la final de sir
+    for(int i=0;i<strlen(s);i++){
+        s[i] = varf->getInfo();
+        pop(); //le reintroducem in sir in ordine inversa si dezalocam memoria
+    }
+}
+
+Stiva_de_caractere Stiva_de_caractere::operator-(Stiva_de_caractere& s2){
+        Stiva_de_caractere new_stack;
+        while(this->varf!=NULL && s2.varf!=NULL){ //facem comparatia intre caractere pana cand una din stive se goleste
+            if(this->varf->getInfo() > s2.varf->getInfo())
+                new_stack.push(this->varf->getInfo());
+            else
+                new_stack.push(s2.varf->getInfo());
+            pop(); //la fiecare pas eliminam varful din fiecare stiva
+            s2.pop();
+        }
+        //elementele ramase in vreuna din stive le eliminam
+        while(varf!=NULL)
+            pop();
+        while(s2.varf!=NULL)
+            s2.pop();
+        return new_stack;
+
+}
+void Stiva_de_caractere::citire_memorare_afisare(){
+    cout<<"Dati numarul de elemente pe care-l introduceti: ";
+    int n;
+    cin>>n;
+    char c;
+    cout<<"\nScrieti elementele cu spatiu sau enter intre ele\n";
+    for(int i=1;i<=n;i++){
+        cin>>c;
+        push(c);
+    }
+    cout<<"Elementele memorate in stiva sunt:"<<endl;
+    Nod* aux = varf;
+    while(aux!=NULL){
+        cout<<aux->getInfo()<<" ";
+        aux = aux->getLegatura();
+    }
+}
+Stiva_de_caractere::~Stiva_de_caractere(){ //destructorul
+
+    if(varf!=NULL)   // verificam daca nu e vida
+        while(varf!=NULL){
+            Nod *aux;
+            aux = varf;
+            varf = varf->getLegatura();
+            delete aux;
+        }
+    //cout<<"s-a apelat destructorul pentru stiva";
+}
+
+// meniul interactiv in main
+
+int main()
+{
+    int k = 1;
+    cout<<"Apasa 1 pentru a adauga o stiva\n";
+    int comandaInitiala;
+    cin>>comandaInitiala;
+    while(comandaInitiala!=1){
+        cout<<"\nNu s-a adaugat nicio stiva. Apasati 1 sa adaugati o stiva\n";
+        cout<<"Apasati 0 pentru a incheia programul\n";
+        cin>>comandaInitiala;
+        if(comandaInitiala==0){
+            k=0;
+            break;
+        }
+    }
+    if(k==1)
+        cout<<"S-a adaugat prima stiva 1\n";
+    int nrStive = 0;
+    Stiva_de_caractere s[10];
+    while(k==1){
+
+        cout<<"\nApasa 1 pentru a adauga o noua stiva\n";
+        cout<<"\nApasa 2 pentru a adauga un element in stiva\n";
+        cout<<"\nApasa 3 pentru a sterge varful stivei\n";
+        cout<<"\nApasa 4 pentru a vedea varful stivei\n";
+        cout<<"\nApasa 5 pentru a vedea daca stiva este goala\n";
+        cout<<"\nApasa 6 pentru a afisa stiva\n";
+        cout<<"\nApasa 7 pentru a adauga/citi mai multe elemente in stiva\n";
+        cout<<"\nApasa 8 pentru a inversa un sir de caractere\n";
+        cout<<"\nApasa 9 pentru a scadea 2 stive\n";
+        cout<<"\nApasa 10 pentru a citi si afisa o stiva fara a-i sterge elementele\n";
+        cout<<"\nApasa 11 pentru a vedea cate stive ati creat\n";
+        cout<<"\nApasa 12 pentru a termina programul\n";
+        int comanda;
+        cin>>comanda;
+        switch(comanda){
+            case 1:{
+                nrStive++;
+                cout<<"\nS-a adaugat a "<<nrStive+1<<" a stiva\n";
+                break;
+            }
+            case 2:{
+                cout<<"\nAlegeti ce stiva modificati(alegeti dintre indici): \n";
+                for(int i=1;i<=nrStive+1;i++)
+                    cout<<i<<" ";
+                cout<<'\n';
+                int indiceStiva;
+                cin>>indiceStiva;
+                cout<<"\nIntroduceti elementul adaugat: ";
+                char c;
+                cin>>c;
+                s[--indiceStiva].push(c);
+                break;
+            }
+            case 3:{
+                cout<<"\nAlegeti ce stiva modificati(alegeti dintre indici): \n";
+                for(int i=1;i<=nrStive+1;i++)
+                    cout<<i<<" ";
+                cout<<'\n';
+                int indiceStiva;
+                cin>>indiceStiva;
+                indiceStiva--;
+                if(s[indiceStiva].isempty()==1)
+                    cout<<"\nStiva este deja goala. Nu se mai poate elimina nimic\n";
+                else{
+                    s[indiceStiva].pop();
+                    cout<<"\nVarful stivei a fost sters\n";
+                }
+                break;
+            }
+            case 4:{
+                cout<<"\nAlegeti ce varf de stiva afisati(alegeti dintre indici): \n";
+                for(int i=1;i<=nrStive+1;i++)
+                    cout<<i<<" ";
+                cout<<'\n';
+                int indiceStiva;
+                cin>>indiceStiva;
+                indiceStiva--;
+                if(s[indiceStiva].isempty()==0)
+                    s[indiceStiva].top();
+                else
+                    cout<<"\nStiva "<<indiceStiva+1<<" este goala\n";
+                break;
+            }
+            case 5:{
+                cout<<"\nAlegeti ce stiva verificati(alegeti dintre indici): \n";
+                for(int i=1;i<=nrStive+1;i++)
+                    cout<<i<<" ";
+                cout<<'\n';
+                int indiceStiva;
+                cin>>indiceStiva;
+                if(s[--indiceStiva].isempty()==1)
+                    cout<<"\nStiva "<<indiceStiva+1<<" este goala\n";
+                else
+                    cout<<"\nStiva "<<indiceStiva+1<<" nu este goala\n";
+                break;
+
+            }
+            case 6:{
+                cout<<"\nAlegeti ce stiva afisati(alegeti dintre indici): \n";
+                for(int i=1;i<=nrStive+1;i++)
+                    cout<<i<<" ";
+                cout<<'\n';
+                int indiceStiva;
+                cin>>indiceStiva;
+                --indiceStiva;
+                if(s[indiceStiva].isempty()==1)
+                    cout<<"\nStiva este goala\n";
+                else{
+                    cout<<s[indiceStiva];
+                    cout<<"\nElementele stivei au fost sterse\n";
+                }
+                break;
+            }
+            case 7:{
+                cout<<"\nAlegeti ce stiva modificati(alegeti dintre indici): \n";
+                for(int i=1;i<=nrStive+1;i++)
+                    cout<<i<<" ";
+                cout<<'\n';
+                int indiceStiva;
+                cin>>indiceStiva;
+                cin>>s[--indiceStiva];
+                break;
+            }
+            case 8:{
+                cout<<"\nAlegeti ce stiva folositi pentru inversare(alegeti dintre indici): \n";
+                for(int i=1;i<=nrStive+1;i++)
+                    cout<<i<<" ";
+                cout<<'\n';
+                int indiceStiva;
+                cin>>indiceStiva;
+                cout<<"\nIntroduceti sirul: ";
+                char sir[100];
+                cin>>sir;
+                s[--indiceStiva].inversare(sir);
+                cout<<"\nSirul inversat este urmatorul: \n";
+                cout<<sir;
+                break;
+            }
+            case 9:{
+                if(nrStive >=1 ){
+                    cout<<"\nAlegeti ce stive scadeti(alegeti 2 dintre indicii de mai jos cu enter sau spatiu intre ei): \n";
+                    for(int i=1;i<=nrStive+1;i++)
+                        cout<<i<<" ";
+                    cout<<'\n';
+                    int indiceStiva1, indiceStiva2;
+                    cin>>indiceStiva1>>indiceStiva2;
+                    int revenireMeniu = 1;
+                    while(s[--indiceStiva1].isempty()==1){
+                        cout<<"\nStiva "<<indiceStiva1+1<<" este goala. Alegeti alta stiva de scazut sau apasati 0 pentru a reveni la meniu\n";
+                        cin>>indiceStiva1;
+                        if(indiceStiva1==0){
+                            revenireMeniu = 0;
+                            break;
+                        }
+                    }
+                    if(revenireMeniu == 1){
+                        while(s[--indiceStiva2].isempty()==1){
+                            cout<<"\nStiva "<<indiceStiva2+1<<" este goala. Alegeti alta stiva de scazut sau apasati 0 pentru a reveni la meniu\n";
+                            cin>>indiceStiva2;
+                            if(indiceStiva2 == 0){
+                                revenireMeniu = 0;
+                                break;
+                            }
+                        }
+                    }
+                    if(revenireMeniu==1){
+                        Stiva_de_caractere sAux;
+                        sAux = s[indiceStiva1] - s[indiceStiva2];
+                        nrStive++;
+                        s[nrStive] = sAux;
+                        cout<<"\n(elementele stivei rezultate sunt adaugate de la stanga la dreapta)\n";
+                        cout<<sAux;
+                        cout<<"\nA fost adaugata a "<<nrStive+1<<" a stiva ca fiind rezultatul scaderii\n";
+                    }
+                }
+                else
+                    cout<<"\nNu exista suficiente stive create\n";
+                break;
+            }
+            case 10:{
+                cout<<"\nAlegeti ce stiva folositi(alegeti dintre indici): \n";
+                for(int i=1;i<=nrStive+1;i++)
+                    cout<<i<<" ";
+                cout<<'\n';
+                int indiceStiva;
+                cin>>indiceStiva;
+                s[--indiceStiva].citire_memorare_afisare();
+                break;
+            }
+            case 11:{
+                cout<<"\nAti adaugat "<<nrStive+1<<endl;
+                break;
+            }
+            case 12:{
+                k = 0;
+                break;
+            }
+            default:{
+                cout<<"\nCOMANDA INCORECTA\n";
+                break;
+            }
+
+        }
+    }
+    return 0;
+}
+
